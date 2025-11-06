@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from django.shortcuts import render
 from django.views.generic import DetailView   # ✅ For class-based view
-from .models import Book, Library              # ✅ Must include Library model
+from .models import Book, Library
+from .models import Library
 
 # ✅ Function-based view — list all books
 def list_books(request):
