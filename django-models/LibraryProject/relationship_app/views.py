@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 from django.shortcuts import render
-from django.views.generic import DetailView
-from .models import Book, Library
+from django.views.generic import DetailView   # ✅ For class-based view
+from .models import Book, Library              # ✅ Must include Library model
 
-# ✅ Function-based view: lists all books
+# ✅ Function-based view — list all books
 def list_books(request):
     books = Book.objects.all()
-    # Checker expects "relationship_app/list_books.html"
     return render(request, 'relationship_app/list_books.html', {'books': books})
 
-# ✅ Class-based view: shows details of a specific library
+# ✅ Class-based view — show details for a specific library
 class LibraryDetailView(DetailView):
     model = Library
     template_name = 'relationship_app/library_detail.html'
