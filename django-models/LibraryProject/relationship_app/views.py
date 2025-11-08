@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from .models import Book, Author, Library
 from .forms import BookForm  # Assume you have a simple ModelForm for Book
+from django.contrib.auth.decorators import permission_required
 
 @login_required
 def list_books(request):
