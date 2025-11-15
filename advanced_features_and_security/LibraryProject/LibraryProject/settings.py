@@ -124,4 +124,7 @@ SESSION_COOKIE_HTTPONLY = True
 # --- CUSTOM USER MODEL ---
 # AUTH_USER_MODEL = 'bookshelf.CustomUser'  # Uncomment if you created a custom user model
 
+# If your app is behind a proxy/load balancer (e.g., Heroku, Nginx)
+# This tells Django to trust the 'X-Forwarded-Proto' header for HTTPS detection
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
