@@ -1,42 +1,36 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import permission_required
+from django.shortcuts import render, get_object_or_404
 from .models import Book
+from .forms import SearchForm, BookForm
+from django.views.decorators.csrf import csrf_protect
 
-# View all books (requires can_view permission)
-@permission_required('bookshelf.can_view', raise_exception=True)
+@csrf_protect
 def book_list(request):
+    form = SearchForm(request.GET or None)
+
     books = Book.objects.all()
-    return render(request, 'bookshelf/book_list.html', {'books': books})
 
-# Add new book (requires can_create permission)
-@permission_required('bookshelf.can_create', raise_exception=True)
+    # Secure search (no SQL injection)
+    if form.is_valid():
+        query = form.cleaned_data.get("query")
+        if query:
+            books = books.filter(title__icontains=query)
+
+    return render(request, "bookshelf/book_list.html", {"books": books, "form": form})
+
+
+@csrf_protect
 def add_book(request):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        author = request.POST.get('author')
-        description = request.POST.get('description')
-        Book.objects.create(title=title, author=author, description=description)
-        return redirect('book_list')
-    return render(request, 'bookshelf/add_book.html')
+    if request.method == "POST":
+        form = BookForm(request.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = BookForm()
 
-# Edit existing book (requires can_edit permission)
-@permission_required('bookshelf.can_edit', raise_exception=True)
-def edit_book(request, pk):
-    book = get_object_or_404(Book, pk=pk)
-    if request.method == 'POST':
-        book.title = request.POST.get('title')
-        book.author = request.POST.get('author')
-        book.description = request.POST.get('description')
-        book.save()
-        return redirect('book_list')
-    return render(request, 'bookshelf/edit_book.html', {'book': book})
+    return render(request, "bookshelf/form_example.html", {"form": form})
 
-# Delete a book (requires can_delete permission)
-@permission_required('bookshelf.can_delete', raise_exception=True)
-def delete_book(request, pk):
-    book = get_object_or_404(Book, pk=pk)
-    if request.method == 'POST':
-        book.delete()
-        return redirect('book_list')
-    return render(request, 'bookshelf/delete_book.html', {'book': book})
+# Documentation:
+# - Django ORM prevents SQL injection
+# - CSRF protection applied using @csrf_protect
+# - User input validated using Django Forms
 
