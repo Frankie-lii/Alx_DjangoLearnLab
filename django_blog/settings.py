@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'blog',  # Add this line
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'blog',
 ]
 
 MIDDLEWARE = [
@@ -121,13 +123,50 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# URL to use when referring to static files (in templates)
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# Directories where Django will look for static files, in addition to each app's "static" directory
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# The directory where collectstatic will collect static files for deployment
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# URL to use when referring to media files (user uploaded files)
 MEDIA_URL = 'media/'
+
+# Directory where uploaded media files will be saved
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Crispy Forms Configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Login/Logout URLs
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+
+# Email configuration (for password reset, optional)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Session settings (optional)
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Security settings (for production, set these to True)
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
+# For development only - allow all hosts
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
