@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load crispy_forms_tags %}
 
 {% block title %}Login - Django Blog{% endblock %}
@@ -8,6 +9,14 @@
     <div class="auth-card">
         <h2>Welcome Back</h2>
         <p>Log in to your account</p>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
         
         <form method="POST" class="auth-form">
             {% csrf_token %}
