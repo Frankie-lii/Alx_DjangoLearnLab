@@ -1,19 +1,24 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
 from .models import Post, Profile
+from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, PostCreateForm, PostUpdateForm
 
+# Home view
 def home(request):
-    posts = Post.objects.all()[:5]
+    posts = Post.objects.all()[:3]
     context = {
         'posts': posts,
         'title': 'Home'
     }
     return render(request, 'blog/index.html', context)
 
+# Authentication views
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
@@ -75,3 +80,85 @@ def profile(request):
         'title': 'Profile'
     }
     return render(request, 'blog/profile.html', context)
+
+# CRUD Views for Posts
+
+class PostListView(ListView):
+    model = Post
+    template_name = 'blog/post_list.html'
+    context_object_name = 'posts'
+    ordering = ['-published_date']
+    paginate_by = 5
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Blog Posts'
+        return context
+
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'blog/post_detail.html'
+    context_object_name = 'post'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.object.title
+        return context
+
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostCreateForm
+    template_name = 'blog/post_form.html'
+    success_url = reverse_lazy('post-list')
+    
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        messages.success(self.request, 'Your post has been created successfully!')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create New Post'
+        context['action'] = 'Create'
+        return context
+
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Post
+    form_class = PostUpdateForm
+    template_name = 'blog/post_form.html'
+    
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        messages.success(self.request, 'Your post has been updated successfully!')
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('post-detail', kwargs={'pk': self.object.pk})
+    
+    def test_func(self):
+        post = self.get_object()
+        return self.request.user == post.author
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Edit Post'
+        context['action'] = 'Update'
+        return context
+
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+    template_name = 'blog/post_confirm_delete.html'
+    success_url = reverse_lazy('post-list')
+    
+    def test_func(self):
+        post = self.get_object()
+        return self.request.user == post.author
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Your post has been deleted successfully!')
+        return super().delete(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Delete Post'
+        return context
