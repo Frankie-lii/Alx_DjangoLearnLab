@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Profile
+from .models import Post, Profile
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -20,7 +20,6 @@ class UserRegisterForm(UserCreationForm):
         
         if commit:
             user.save()
-            # Create a profile for the user
             Profile.objects.create(user=user)
         return user
 
@@ -37,3 +36,44 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['bio', 'profile_picture']
+
+# Post Forms
+class PostCreateForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter post title'
+            }),
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Write your blog post content here...',
+                'rows': 10
+            }),
+        }
+        labels = {
+            'title': 'Post Title',
+            'content': 'Content'
+        }
+        help_texts = {
+            'title': 'Enter a catchy title for your blog post',
+            'content': 'Write the main content of your blog post'
+        }
+
+class PostUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter post title'
+            }),
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Write your blog post content here...',
+                'rows': 10
+            }),
+        }
