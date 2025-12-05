@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Post - Django Blog{% endblock %}
+
+{% block content %}
+<div class="delete-confirmation-container">
+    <div class="delete-card">
+        <div class="delete-icon">
+            <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+        </div>
+        
+        <h2>Confirm Delete</h2>
+        
+        <div class="post-preview">
+            <h4>{{ object.title }}</h4>
+            <p class="text-muted">
+                <small>
+                    <i class="fas fa-user"></i> {{ object.author.username }} | 
+                    <i class="fas fa-calendar"></i> {{ object.published_date|date:"M d, Y" }}
+                </small>
+            </p>
+            <p class="post-excerpt">{{ object.content|truncatewords:50 }}</p>
+        </div>
+        
+        <div class="alert alert-warning" role="alert">
+            <h5 class="alert-heading">Warning!</h5>
+            <p>You are about to delete this post. This action cannot be undone.</p>
+            <hr>
+            <p class="mb-0">All content, comments, and associated data will be permanently removed.</p>
+        </div>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="delete-actions">
+                <button type="submit" class="btn btn-danger btn-lg">
+                    <i class="fas fa-trash"></i> Delete Permanently
+                </button>
+                <a href="{% url 'post-detail' object.pk %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+        
+        <div class="delete-info">
+            <p class="text-muted">
+                <small>
+                    <i class="fas fa-info-circle"></i> 
+                    Once deleted, this post cannot be recovered. Please make sure you want to proceed.
+                </small>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

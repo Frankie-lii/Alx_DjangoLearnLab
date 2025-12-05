@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ action }} Post - Django Blog{% endblock %}
+
+{% block content %}
+<div class="post-form-container">
+    <div class="post-form-header">
+        <h1>
+            {% if action == 'Create' %}
+                <i class="fas fa-plus"></i> Create New Post
+            {% else %}
+                <i class="fas fa-edit"></i> Edit Post
+            {% endif %}
+        </h1>
+        <p>
+            {% if action == 'Create' %}
+                Share your thoughts and ideas with the world.
+            {% else %}
+                Update your post content.
+            {% endif %}
+        </p>
+    </div>
+    
+    <div class="post-form-card">
+        <form method="POST" class="post-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                {{ form.title|as_crispy_field }}
+                <div class="form-text">
+                    Choose a clear and descriptive title for your post.
+                </div>
+            </div>
+            
+            <div class="form-group">
+                {{ form.content|as_crispy_field }}
+                <div class="form-text">
+                    Write your post content here. You can use basic HTML or Markdown formatting.
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    {% if action == 'Create' %}
+                        <i class="fas fa-paper-plane"></i> Publish Post
+                    {% else %}
+                        <i class="fas fa-save"></i> Update Post
+                    {% endif %}
+                </button>
+                
+                {% if action == 'Create' %}
+                    <a href="{% url 'post-list' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                {% else %}
+                    <a href="{% url 'post-detail' object.pk %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+        
+        {% if action == 'Create' %}
+            <div class="post-guidelines">
+                <h4><i class="fas fa-lightbulb"></i> Posting Guidelines</h4>
+                <ul>
+                    <li>Make sure your title accurately describes your content</li>
+                    <li>Use clear and concise language</li>
+                    <li>Add proper formatting for better readability</li>
+                    <li>Check for spelling and grammar errors</li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Title character counter
+    const titleInput = document.getElementById('id_title');
+    if (titleInput) {
+        const counter = document.createElement('small');
+        counter.className = 'char-counter text-muted';
+        counter.style.display = 'block';
+        counter.style.marginTop = '5px';
+        counter.innerHTML = 'Characters: <span class="count">0</span>/200';
+        titleInput.parentNode.appendChild(counter);
+        
+        titleInput.addEventListener('input', function() {
+            const count = this.value.length;
+            counter.querySelector('.count').textContent = count;
+            if (count > 180) {
+                counter.style.color = '#e74c3c';
+            } else if (count > 150) {
+                counter.style.color = '#f39c12';
+            } else {
+                counter.style.color = '#27ae60';
+            }
+        });
+        titleInput.dispatchEvent(new Event('input'));
+    }
+    
+    // Content character counter
+    const contentInput = document.getElementById('id_content');
+    if (contentInput) {
+        const counter = document.createElement('small');
+        counter.className = 'char-counter text-muted';
+        counter.style.display = 'block';
+        counter.style.marginTop = '5px';
+        counter.innerHTML = 'Characters: <span class="count">0</span>/10000';
+        contentInput.parentNode.appendChild(counter);
+        
+        contentInput.addEventListener('input', function() {
+            const count = this.value.length;
+            counter.querySelector('.count').textContent = count;
+            if (count > 9000) {
+                counter.style.color = '#e74c3c';
+            } else if (count > 7000) {
+                counter.style.color = '#f39c12';
+            } else {
+                counter.style.color = '#27ae60';
+            }
+        });
+        contentInput.dispatchEvent(new Event('input'));
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

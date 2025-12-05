@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} - Django Blog{% endblock %}
+
+{% block content %}
+<article class="post-detail">
+    <header class="post-header">
+        <h1>{{ post.title }}</h1>
+        
+        <div class="post-meta">
+            <div class="author-info">
+                {% if post.author.profile.profile_picture %}
+                    <img src="{{ post.author.profile.profile_picture.url }}" 
+                         alt="{{ post.author.username }}" 
+                         class="author-avatar">
+                {% else %}
+                    <div class="author-avatar-initials">
+                        {{ post.author.username|first|upper }}
+                    </div>
+                {% endif %}
+                <div class="author-details">
+                    <span class="author-name">{{ post.author.username }}</span>
+                    <span class="post-date">
+                        <i class="fas fa-calendar"></i> 
+                        {{ post.published_date|date:"F d, Y" }}
+                    </span>
+                </div>
+            </div>
+            
+            {% if user.is_authenticated and user == post.author %}
+                <div class="post-actions">
+                    <a href="{% url 'post-update' post.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit Post
+                    </a>
+                    <a href="{% url 'post-delete' post.pk %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+    
+    <div class="post-content">
+        {{ post.content|linebreaks }}
+    </div>
+    
+    <footer class="post-footer">
+        <div class="post-tags">
+            <strong>Tags:</strong>
+            <span class="tag">Django</span>
+            <span class="tag">Blog</span>
+            <span class="tag">Tutorial</span>
+        </div>
+        
+        <div class="post-navigation">
+            <a href="{% url 'post-list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to All Posts
+            </a>
+            
+            {% if user.is_authenticated %}
+                <a href="{% url 'post-create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Post
+                </a>
+            {% endif %}
+        </div>
+    </footer>
+</article>
+
+<!-- Comments Section (Placeholder) -->
+<div class="comments-section">
+    <h3><i class="fas fa-comments"></i> Comments</h3>
+    <div class="no-comments">
+        <p>No comments yet. Be the first to comment!</p>
+    </div>
+    
+    {% if user.is_authenticated %}
+        <form class="comment-form">
+            <div class="form-group">
+                <textarea class="form-control" rows="4" placeholder="Write your comment here..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Comment</button>
+        </form>
+    {% else %}
+        <div class="login-prompt">
+            <p>
+                <a href="{% url 'login' %}">Login</a> to leave a comment.
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
