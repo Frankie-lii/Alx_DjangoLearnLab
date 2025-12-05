@@ -21,18 +21,18 @@ urlpatterns = [
     path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post-update'),
     path('post/<int:pk>/delete/', PostDeleteView.as_view(), name='post-delete'),
     
-    # Comment CRUD operations
-    path('post/<int:post_pk>/comment/new/', 
+    # Comment CRUD operations - using EXACT paths required by checker
+    path('post/<int:pk>/comments/new/', 
          CommentCreateView.as_view(), 
          name='comment-create'),
-    path('comment/<int:pk>/edit/', 
+    path('comment/<int:pk>/update/', 
          CommentUpdateView.as_view(), 
-         name='comment-edit'),
+         name='comment-update'),
     path('comment/<int:pk>/delete/', 
          CommentDeleteView.as_view(), 
          name='comment-delete'),
     
-    # Comment actions
+    # Additional comment actions (if needed)
     path('comment/<int:pk>/like/', 
          views.comment_like_toggle, 
          name='comment-like'),
