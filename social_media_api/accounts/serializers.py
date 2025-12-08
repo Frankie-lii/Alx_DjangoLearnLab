@@ -1,67 +1,104 @@
-from rest_framework import serializers
-from django.contrib.auth import authenticate
-from .models import CustomUser
+from rest_framework import status, permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import logout
+from django.contrib.auth import get_user_model
+from .serializers import (
+    UserRegistrationSerializer,
+    UserLoginSerializer,
+    UserProfileSerializer
+)
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for user registration."""
-    password = serializers.CharField(write_only=True, min_length=8)
-    password2 = serializers.CharField(write_only=True, min_length=8)
-    
-    class Meta:
-        model = CustomUser
-        fields = ['username', 'email', 'password', 'password2', 'first_name', 'last_name']
-    
-    def validate(self, data):
-        """Check that passwords match."""
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError({"password": "Passwords do not match."})
-        return data
-    
-    def create(self, validated_data):
-        """Create and return a new user."""
-        validated_data.pop('password2')
-        user = CustomUser.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data.get('email', ''),
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
-        )
-        return user
+User = get_user_model()
 
-class UserLoginSerializer(serializers.Serializer):
-    """Serializer for user login."""
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
+class UserRegistrationView(APIView):
+    """View for user registration."""
+    permission_classes = [permissions.AllowAny]
     
-    def validate(self, data):
-        """Validate user credentials."""
-        username = data.get('username')
-        password = data.get('password')
-        
-        if username and password:
-            user = authenticate(username=username, password=password)
-            if user:
-                if user.is_active:
-                    data['user'] = user
-                else:
-                    raise serializers.ValidationError("User account is disabled.")
-            else:
-                raise serializers.ValidationError("Unable to login with provided credentials.")
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            
+            # Get the token that was created in the serializer
+            token = Token.objects.get(user=user)
+            
+            return Response({
+                'message': 'User registered successfully.',
+                'token': token.key,
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserLoginView(APIView):
+    """View for user login."""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            
+            # Get or create token for the user
+            token, created = Token.objects.get_or_create(user=user)
+            
+            return Response({
+                'message': 'Login successful.',
+                'token': token.key,
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserLogoutView(APIView):
+    """View for user logout."""
+    
+    def post(self, request):
+        # Delete the token
+        if hasattr(request.user, 'auth_token'):
+            request.user.auth_token.delete()
         else:
-            raise serializers.ValidationError("Must include 'username' and 'password'.")
-        return data
+            # Fallback: try to delete token if it exists
+            Token.objects.filter(user=request.user).delete()
+        
+        logout(request)
+        return Response({
+            'message': 'Logout successful.'
+        }, status=status.HTTP_200_OK)
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile."""
-    follower_count = serializers.IntegerField(read_only=True)
-    following_count = serializers.IntegerField(read_only=True)
+class UserProfileView(APIView):
+    """View for user profile."""
     
-    class Meta:
-        model = CustomUser
-        fields = [
-            'id', 'username', 'email', 'first_name', 'last_name',
-            'bio', 'profile_picture', 'follower_count', 'following_count',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        serializer = UserProfileSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserDetailView(APIView):
+    """View for viewing other users' profiles."""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+            serializer = UserProfileSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'User not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
